@@ -31,8 +31,8 @@ contract SilverNFT is ERC721 {
             revert SilverNFT__NoIdInputted();
         }
 
-        // If tokenId already have an owner, it already minted 
-        if (ownerOf(tokenId) != address(0)) {
+        // If tokenId already have an owner, it already minted
+        if (_ownerOf(tokenId) != address(0)) {
             revert SilverNFT__TokenAlreadyMinted(tokenId);
         }
 

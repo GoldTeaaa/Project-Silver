@@ -24,11 +24,11 @@ contract SilverERC20 is ERC20 {
         _mint(_to, _amount);
     }
 
-    function burn(address _from, uint256 _amount) external /* onlyRole */{
+    function burn(address _from, uint256 _amount) external /* onlyRole */ {
         uint256 senderBalance = balanceOf(_msgSender());
 
         // Make sure burn token done by the sender and burn their own token
-        if(_from != _msgSender()) {
+        if (_from != _msgSender()) {
             revert SilverERC20__UnauthorizedBurn();
         }
         if (_from == address(0)) {
