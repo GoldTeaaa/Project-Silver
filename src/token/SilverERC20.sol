@@ -13,7 +13,7 @@ contract SilverERC20 is ERC20 {
 
     constructor() ERC20("ETHSilver", "ESLV") {}
 
-    function mint(address _to, uint256 _amount) external {
+    function mint(address _to, uint256 _amount) external returns(bool){
         if (_to == address(0)) {
             revert SilverERC20__AddressCantBeNull();
         }
@@ -22,9 +22,10 @@ contract SilverERC20 is ERC20 {
         }
 
         _mint(_to, _amount);
+        return true;
     }
 
-    function burn(address _from, uint256 _amount) external /* onlyRole */ {
+    function burn(address _from, uint256 _amount) external returns(bool) /* onlyRole */ {
         uint256 senderBalance = balanceOf(_msgSender());
 
         // Make sure burn token done by the sender and burn their own token
@@ -41,5 +42,6 @@ contract SilverERC20 is ERC20 {
             revert SilverERC20__AmountMustBeGreaterThanZero();
         }
         _burn(_from, _amount);
+        return true;
     }
 }
