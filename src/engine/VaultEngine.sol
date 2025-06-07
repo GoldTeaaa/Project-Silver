@@ -2,10 +2,13 @@
 pragma solidity ^0.8.25;
 
 import {ISilverNFT} from "src/interface/ISilverNFT.sol";
+import {IdUtils} from "src/utils/IdUtils.sol";
 
 contract VaultEngine {
+    using IdUtils for string;
+
     error VaultEngine__MintNftFailed();
-    
+
     ISilverNFT i_silverNFT;
 
     enum VaultStatus {
@@ -23,15 +26,19 @@ contract VaultEngine {
 
     mapping(uint256 tokenId => SilverMetadata) private s_silverMetadata;
 
-    constructor(address SilverNFT){
+    constructor(address SilverNFT) {
         i_silverNFT = ISilverNFT(SilverNFT);
     }
 
-    function registerBar(string memory _id, uint256 _weight, uint256 _purity, string memory _redeemLocation) public{
-        uint256 tokenId = _hashIdToUInt(_id);
-        
+    /**
+     * @notice Weight fractional can only be 1, 5, 10 and 50
+     */
+    function registerBar(string memory _id, uint256 _weight, uint256 _purity, string memory _redeemLocation) public {
+        //tokenId checks done in mintNft
+        uint256 tokenId = _id._hashIdToUint();
+
         bool success = i_silverNFT.mintNft(tokenId);
-        if(!success){
+        if (!success) {
             revert VaultEngine__MintNftFailed();
         }
 
@@ -42,6 +49,12 @@ contract VaultEngine {
             redeemLocation: _redeemLocation,
             status: VaultStatus.Available
         });
+    }
+
+    function redeemFromVault(uint256 amountToRedeem, string calldata location) public {
+        //Select how many NFT to be redeemed
+        //check the stock in the location
+        //check if the silver available
     }
 
     function getSilverMetadata(uint256 tokenId)
@@ -55,9 +68,5 @@ contract VaultEngine {
             s_silverMetadata[tokenId].purity,
             s_silverMetadata[tokenId].redeemLocation
         );
-    }
-
-    function _hashIdToUInt(string memory _id) public pure returns (uint256) {
-        return uint256(keccak256(bytes(_id)));
     }
 }

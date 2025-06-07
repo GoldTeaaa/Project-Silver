@@ -13,31 +13,29 @@ contract testSilverERC20 is StdCheats, Test {
     deployToken deployer;
 
     address USER = makeAddr("USER");
-    
-    function setUp() public{
+
+    function setUp() public {
         deployer = new deployToken();
-        (silverERC20, ,) = deployer.run();
+        (silverERC20,,) = deployer.run();
         i_silverERC20 = ISilverERC20(address(silverERC20));
     }
 
-    function testMintSilver() public{
+    function testMintSilver() public {
         vm.prank(msg.sender);
         i_silverERC20.mint(USER, 100);
 
         vm.assertEq(i_silverERC20.balanceOf(USER), 100);
     }
 
-    function testCannotMintToEmptyAddress() public{
+    function testCannotMintToEmptyAddress() public {
         vm.expectRevert();
         vm.prank(msg.sender);
         i_silverERC20.mint(address(0), 100);
     }
 
-    function testCannotMintZero() public{
+    function testCannotMintZero() public {
         vm.expectRevert();
         vm.prank(msg.sender);
         i_silverERC20.mint(USER, 0);
     }
-
-    
 }
