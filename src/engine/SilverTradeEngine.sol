@@ -7,8 +7,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IdUtils} from "src/utils/IdUtils.sol";
+import {IdUtils} from "src/utils/IdUtils.sol";
 
 contract SilverTradeEngine is ReentrancyGuard {
+    using IdUtils for string;
+
     error SilverTradeEngine__OraclePriceIsStale(int256);
     error SilverTradeEngine__AmountToBuyNeedMoreThanZero();
     error SilverTradeEngine__ExceedLimitOfMaxPurchase(uint256);
@@ -112,7 +115,8 @@ contract SilverTradeEngine is ReentrancyGuard {
     }
 
     function TransferNFTOwnership(address to, string memory silverId) external checkNullAddress(to) {
-        bool success = i_silverNFT.transfer(to, silverId);
+        uint256 silverNFTId = silverId._hashIdToUint();
+        bool success = i_silverNFT.transfer(to, silverNFTId);
         if (!success) {
             revert SilverTradeEngine__TransferNFTOwnershipFailed();
         }

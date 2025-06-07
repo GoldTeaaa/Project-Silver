@@ -32,16 +32,15 @@ contract SilverNFT is ERC721 {
         return true;
     }
 
-    function transfer(address to, string memory id) external returns (bool) {
+    function transfer(address to, uint256 id) external returns (bool) {
         if (to == address(0)) {
             revert SilverNFT__TransferToZeroAddress(to);
         }
-        uint256 tokenId = id._hashIdToUint();
-        address owner = _ownerOf(tokenId);
+        address owner = _ownerOf(id);
         if (owner != msg.sender) {
             revert SilverNFT__NotTokenOwner(owner);
         }
-        safeTransferFrom(msg.sender, to, tokenId);
+        safeTransferFrom(msg.sender, to, id);
         return true;
     }
 }
