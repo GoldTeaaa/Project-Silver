@@ -8,6 +8,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IdUtils} from "src/utils/IdUtils.sol";
 import {IdUtils} from "src/utils/IdUtils.sol";
+import {VaultEngine} from "src/engine/VaultEngine.sol";
 
 contract SilverTradeEngine is ReentrancyGuard {
     using IdUtils for string;
@@ -22,11 +23,14 @@ contract SilverTradeEngine is ReentrancyGuard {
     error SilverTradeEngine__TransferERC20OwnershipFailed();
     error SilverTradeEngine__TransferNFTOwnershipFailed();
     error SilverTradeEngine__TargetToSendAddressIsNull(address);
+    error SilverTradeEngine__RedeemSilverFailed();
+    error SilverTradeEngine__BurnFailed();
 
     ISilverERC20 immutable i_silverERC20;
     ISilverNFT immutable i_silverNFT;
     IERC20 immutable i_mockStableCoin;
     AggregatorV3Interface immutable i_aggregator;
+    VaultEngine immutable vault;
 
     int256 constant PRECISION = 10e10;
     uint256 constant MAX_AMOUNT = 1000000;
@@ -38,6 +42,7 @@ contract SilverTradeEngine is ReentrancyGuard {
         i_silverNFT = ISilverNFT(SilverNFT);
         i_mockStableCoin = IERC20(MockStableCoin);
         i_aggregator = AggregatorV3Interface(silverPriceFeedAddress);
+        vault = VaultEngine(SilverNFT);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -90,11 +95,19 @@ contract SilverTradeEngine is ReentrancyGuard {
      * @notice Redeem the silver to its physical form
      * @notice Burn the ERC20 and mint the NFT as certificate
      */
-    function redeemSilver(uint256 amountToRedeem) external {
+    function redeemSilver(uint256 amountToRedeem, string calldata location) external {
         //input total silver to redeem
         //check if the vault have stocks, if not then revert
         //burn the redeemer erc20 token
         //mint the nft to the redeemer
+        bool redeemSuccess = vault.redeemFromVault(amountToRedeem, location);
+        if (!redeemSuccess) {
+            revert SilverTradeEngine__RedeemSilverFailed();
+        }
+        bool burnSuccess = i_silverERC20.burn(msg.sender, amountToRedeem);
+        if (!burnSuccess) {
+            revert SilverTradeEngine__BurnFailed();
+        }
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -18,7 +18,7 @@ contract SilverNFT is ERC721 {
     /**
      * use encoding or hash for the id
      */
-    function mintNft(uint256 tokenId) external returns (bool /* onlyRole */ ) {
+    function mintNft(uint256 tokenId) external returns (bool) /* onlyRole */ {
         if (tokenId == 0) {
             revert SilverNFT__NoIdInputted();
         }
@@ -33,9 +33,6 @@ contract SilverNFT is ERC721 {
     }
 
     function transfer(address to, uint256 id) external returns (bool) {
-        if (to == address(0)) {
-            revert SilverNFT__TransferToZeroAddress(to);
-        }
         address owner = _ownerOf(id);
         if (owner != msg.sender) {
             revert SilverNFT__NotTokenOwner(owner);
