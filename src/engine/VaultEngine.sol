@@ -2,6 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {ISilverNFT} from "src/interface/ISilverNFT.sol";
+import {ISilverERC20} from "src/interface/ISilverERC20.sol";
 import {IdUtils} from "src/utils/IdUtils.sol";
 
 contract VaultEngine {
@@ -10,8 +11,10 @@ contract VaultEngine {
     error VaultEngine__MintNftFailed();
     error VaultEngine__MintNftFailedBecauseNotEnoughFractionalSilverWeight(uint256);
     error VaultEngine__WeightCanOnlyBeOneFiveTenOrFifty(uint256);
+    error VaultEngine__RedeemCallerMustBeFromVault(address);
 
     ISilverNFT i_silverNFT;
+    ISilverERC20 i_silverERC20;
 
     enum VaultStatus {
         Available,
@@ -29,16 +32,27 @@ contract VaultEngine {
     event TransferredNFT(address indexed from, address indexed to, uint256 indexed tokenId);
 
     mapping(uint256 tokenId => SilverMetadata) private s_silverMetadata;
-    mapping(string location => mapping(uint256 weight => uint256[] tokenId)) private s_availableTokensByLocationAndWeight;
+    mapping(string location => mapping(uint256 weight => uint256[] tokenId)) private
+        s_availableTokensByLocationAndWeight;
 
-    constructor(address SilverNFT) {
-        i_silverNFT = ISilverNFT(SilverNFT);
+    modifier redeemMustBeFromVault(address sender) {
+        if (sender != address(this)) {
+            revert VaultEngine__RedeemCallerMustBeFromVault(sender);
+        }
+        _;
+    }
+
+    constructor(address SilverNftAddress, address SilverERC20Address) {
+        i_silverNFT = ISilverNFT(SilverNftAddress);
+        i_silverERC20 = ISilverERC20(SilverERC20Address);
     }
 
     /**
      * @notice Weight fractional can only be 1, 5, 10 and 50
      */
-    function registerBar(string memory _id, uint256 _weight, uint256 _purity, string memory _redeemLocation) public /* addRole */{
+    function registerBar(string memory _id, uint256 _weight, uint256 _purity, string memory _redeemLocation)
+        public /* addRole */
+    {
         if (_weight != 1 && _weight != 5 && _weight != 10 && _weight != 50) {
             revert VaultEngine__WeightCanOnlyBeOneFiveTenOrFifty(_weight);
         }
@@ -64,17 +78,21 @@ contract VaultEngine {
     }
 
     /**
-    @dev [WARNING!] Revert if the fractional doesnt match the amountToRedeem, not production safe!
-    @dev use greedy algorithm to redeem
+     * @dev [WARNING!] Revert if the fractional doesnt match the amountToRedeem, not production safe!
+     * @dev use greedy algorithm to redeem
      */
-    function redeemFromVault(uint256 amountToRedeem, string calldata location) external returns(bool){
+    function redeemFromVault(uint256 amountToRedeem, string calldata location)
+        external
+        redeemMustBeFromVault(msg.sender)
+        returns (bool)
+    {
         //Select how many NFT to be redeemed
         //check the stock in the location
         //check if the silver available
         uint256[4] memory weights = [uint256(50), 10, 5, 1];
         uint256 remaining = amountToRedeem;
         uint256 weightIndex = 0;
-        
+
         while (weightIndex < weights.length && remaining > 0) {
             uint256 weight = weights[weightIndex];
             uint256[] storage pool = s_availableTokensByLocationAndWeight[location][weight];

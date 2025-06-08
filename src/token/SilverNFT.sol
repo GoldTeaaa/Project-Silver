@@ -18,7 +18,7 @@ contract SilverNFT is ERC721 {
     /**
      * use encoding or hash for the id
      */
-    function mintNft(uint256 tokenId) external returns (bool) /* onlyRole */ {
+    function mintNft(uint256 tokenId) external returns (bool /* onlyRole */ ) {
         if (tokenId == 0) {
             revert SilverNFT__NoIdInputted();
         }
