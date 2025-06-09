@@ -2,13 +2,12 @@
 pragma solidity ^0.8.25;
 
 /**
- * @title SilverTradeEngine 
- @author Handaya Riawan
- @dev Still in development stage, not proper for production.
- @dev This contract is used for research purpose and not yet applicable to real world usage.
- @dev The purpose is to give insight and idea for future development in current field.
+ * @title SilverTradeEngine
+ *  @author Handaya Riawan
+ *  @dev Still in development stage, not proper for production.
+ *  @dev This contract is used for research purpose and not yet applicable to real world usage.
+ *  @dev The purpose is to give insight and idea for future development in current field.
  */
-
 import {ISilverERC20} from "src/interface/ISilverERC20.sol";
 import {ISilverNFT} from "src/interface/ISilverNFT.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -35,7 +34,6 @@ contract SilverTradeEngine is ReentrancyGuard {
     error SilverTradeEngine__NotOwnerOfNFT(address);
     error SilverTradeEngine__NFTNotApproved(address);
 
-
     ISilverERC20 immutable i_silverERC20;
     ISilverNFT immutable i_silverNFT;
     IERC20 immutable i_mockStableCoin;
@@ -45,8 +43,8 @@ contract SilverTradeEngine is ReentrancyGuard {
     int256 constant PRECISION = 1e10;
     uint256 constant MAX_AMOUNT = 1000000;
 
-    mapping (address seller => uint256 amountToSell) private s_listedERC2OSilverToSell;
-    mapping (address seller => uint256 tokenIdToSell) private s_listedNFTToSell;
+    mapping(address seller => uint256 amountToSell) private s_listedERC2OSilverToSell;
+    mapping(address seller => uint256 tokenIdToSell) private s_listedNFTToSell;
 
     event PaymentReceived(address indexed from, address indexed to, uint256 indexed amount);
     event RedeemSilver(address indexed from, uint256 indexed amount, string indexed location);
@@ -78,13 +76,13 @@ contract SilverTradeEngine is ReentrancyGuard {
                               BUY SECTION
     //////////////////////////////////////////////////////////////*/
     /**
-    @dev This buy function used to buy silver with no listed ERC20 to sell.
-    @notice The routing part to choose whether to use this buySilver or the 
-    @notice buySilverERC20 function is assumed to be route from the front end.
-    @notice Buyer may arbitrarily prefer to choose this function and not check
-    @notice if there are existing silver ERC20 that listed to sell that may cause infinite minting
+     * @dev This buy function used to buy silver with no listed ERC20 to sell.
+     * @notice The routing part to choose whether to use this buySilver or the
+     * @notice buySilverERC20 function is assumed to be route from the front end.
+     * @notice Buyer may arbitrarily prefer to choose this function and not check
+     * @notice if there are existing silver ERC20 that listed to sell that may cause infinite minting
      */
-    function buySilver(uint256 amountSilverToBuy) external virtual{
+    function buySilver(uint256 amountSilverToBuy) external virtual {
         if (amountSilverToBuy == 0) {
             revert SilverTradeEngine__AmountToBuyNeedMoreThanZero();
         }
@@ -111,10 +109,10 @@ contract SilverTradeEngine is ReentrancyGuard {
     }
 
     /**
-    @notice This function is still in development stage and not proper for production.
-    @notice Assume to buy directly all the silver sold by the seller.
+     * @notice This function is still in development stage and not proper for production.
+     * @notice Assume to buy directly all the silver sold by the seller.
      */
-    function buySilverERC20(address seller) external virtual{
+    function buySilverERC20(address seller) external virtual {
         uint256 amountToBuy = s_listedERC2OSilverToSell[seller];
         int256 silverPrice = getSilverPrice();
         uint256 calculatedPrice = amountToBuy * uint256(silverPrice);
@@ -125,12 +123,12 @@ contract SilverTradeEngine is ReentrancyGuard {
     }
 
     /**
-    @notice Weakness of this buying model is the user have to know the seller
-    @notice for future development this have to be changed
+     * @notice Weakness of this buying model is the user have to know the seller
+     * @notice for future development this have to be changed
      */
-    function buySilverNFT(address seller) external virtual{
+    function buySilverNFT(address seller) external virtual {
         uint256 silverNFTId = s_listedNFTToSell[seller];
-        (,uint256 weight,,) = vault.getSilverNftMetadata(silverNFTId);
+        (, uint256 weight,,) = vault.getSilverNftMetadata(silverNFTId);
         int256 price = getSilverPrice();
         uint256 calculatedPrice = uint256(price) * weight;
 
@@ -196,23 +194,23 @@ contract SilverTradeEngine is ReentrancyGuard {
     }
 
     /**
-    @notice Make sure the NFT owner approve first outside this function before listing
-    @notice This algorithm is static buying that assume the buyer know what seller they want to buy from
-    @notice Future development is to store it in struct and list it in an array so the frontend 
-    can iterate through the array
+     * @notice Make sure the NFT owner approve first outside this function before listing
+     * @notice This algorithm is static buying that assume the buyer know what seller they want to buy from
+     * @notice Future development is to store it in struct and list it in an array so the frontend
+     * can iterate through the array
      */
-    function listNftToSell(string calldata silverId) external virtual{
+    function listNftToSell(string calldata silverId) external virtual {
         uint256 silverNFTId = silverId._hashIdToUint();
-        
+
         address ownerOfNft = i_silverNFT.ownerOf(silverNFTId);
-        if(ownerOfNft != msg.sender) {
+        if (ownerOfNft != msg.sender) {
             revert SilverTradeEngine__NotOwnerOfNFT(ownerOfNft);
         }
         address approvedBy = i_silverNFT.getApproved(silverNFTId);
-        if(approvedBy != address(this)){
+        if (approvedBy != address(this)) {
             revert SilverTradeEngine__NFTNotApproved(approvedBy);
         }
-        
+
         s_listedNFTToSell[msg.sender] = silverNFTId;
 
         emit NFTListed(msg.sender, silverNFTId, silverId);
@@ -244,8 +242,8 @@ contract SilverTradeEngine is ReentrancyGuard {
     }
 
     /**
-    @dev This can be modified if in the future it can receive more than one type of stablecoin
-    @dev But for current version, only mock stablecoin is supported for research purpose
+     * @dev This can be modified if in the future it can receive more than one type of stablecoin
+     * @dev But for current version, only mock stablecoin is supported for research purpose
      */
     function _safeTransferStableCoin(address from, address to, uint256 amount) internal virtual {
         bool transferSuccess = i_mockStableCoin.transferFrom(from, to, amount);

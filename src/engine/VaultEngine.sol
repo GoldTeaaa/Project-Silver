@@ -42,9 +42,8 @@ contract VaultEngine {
         _;
     }
 
-    constructor(address SilverNftAddress, address SilverERC20Address) {
+    constructor(address SilverNftAddress ) {
         i_silverNFT = ISilverNFT(SilverNftAddress);
-        i_silverERC20 = ISilverERC20(SilverERC20Address);
     }
 
     /**

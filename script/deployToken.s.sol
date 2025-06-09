@@ -12,10 +12,7 @@ contract deployToken is Script {
     uint256 constant INITIAL_SUPPLY = 10 ** 18;
 
     function run() public returns (SilverERC20, SilverNFT, MockStableCoin) {
-        HelperConfig config = new HelperConfig();
-        uint256 privKey = config.getPrivKey();
-
-        vm.startBroadcast(privKey);
+        vm.startBroadcast();
         SilverNFT silverNFT = new SilverNFT();
         SilverERC20 silverERC20 = new SilverERC20();
         MockStableCoin stableCoin = new MockStableCoin(INITIAL_SUPPLY);
