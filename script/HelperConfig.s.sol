@@ -14,7 +14,7 @@ contract HelperConfig is Script {
 
     uint256 constant INITIAL_SUPPLY = 1e10;
     uint8 constant DECIMALS = 8;
-    ///@notice Ley say the silver price per oz is $30 
+    ///@notice Ley say the silver price per oz is $30
     int256 constant SILVER_PRICE = 30e8;
 
     struct NetworkConfig {
@@ -28,9 +28,9 @@ contract HelperConfig is Script {
     NetworkConfig public activeNetworkConfig;
 
     constructor() {
-        if(block.chainid == 11_155_111) {
+        if (block.chainid == 11_155_111) {
             activeNetworkConfig = sepoliaConfig();
-        }else{
+        } else {
             activeNetworkConfig = anvilAndLocalConfig();
         }
     }

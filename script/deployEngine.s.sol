@@ -11,20 +11,31 @@ import {MockStableCoin} from "../src/token/MockStableCoin.sol";
 import {HelperConfig} from "../script/HelperConfig.s.sol";
 
 contract deployEngine is Script {
-    
-    function run() public returns (SilverTradeEngine, VaultEngine) {
+    function run()
+        public
+        returns (
+            SilverTradeEngine,
+            VaultEngine,
+            address ,
+            address ,
+            address ,
+            address 
+        )
+    {
         HelperConfig config = new HelperConfig();
-        (address silverERC20Address, 
-        address silverNFTAddress, 
-        address mockStableCoinAddress, 
-        address priceFeedAddress, 
-        uint256 privKey) = config.activeNetworkConfig();
+        (
+            address silverERC20Address,
+            address silverNFTAddress,
+            address mockStableCoinAddress,
+            address priceFeedAddress,
+            uint256 privKey
+        ) = config.activeNetworkConfig();
 
         vm.startBroadcast(privKey);
         SilverTradeEngine tradeEngine =
             new SilverTradeEngine(silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
         VaultEngine vaultEngine = new VaultEngine(silverNFTAddress);
         vm.stopBroadcast();
-        return (tradeEngine, vaultEngine);
+        return (tradeEngine, vaultEngine, silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
     }
 }

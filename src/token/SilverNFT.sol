@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IdUtils} from "src/utils/IdUtils.sol";
+import {ERC721Enumerable, ERC721} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
-contract SilverNFT is ERC721 {
+contract SilverNFT is ERC721Enumerable{
     using IdUtils for string;
 
     error SilverNFT__TokenAlreadyMinted(uint256 tokenId);

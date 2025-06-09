@@ -128,7 +128,8 @@ contract SilverTradeEngine is ReentrancyGuard {
      */
     function buySilverNFT(address seller) external virtual {
         uint256 silverNFTId = s_listedNFTToSell[seller];
-        (, uint256 weight,,) = vault.getSilverNftMetadata(silverNFTId);
+        // (, uint256 weight,,) = vault.getSilverNftMetadata(silverNFTId);
+        uint256 weight = vault.getSilverNftMetadata(silverNFTId).weight;
         int256 price = getSilverPrice();
         uint256 calculatedPrice = uint256(price) * weight;
 

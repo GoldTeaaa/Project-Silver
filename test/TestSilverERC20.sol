@@ -13,6 +13,7 @@ contract testSilverERC20 is StdCheats, Test {
     deployToken deployer;
 
     address USER = makeAddr("USER");
+    address ATTACKER = makeAddr("ATTACKER");
 
     function setUp() public {
         deployer = new deployToken();
@@ -37,5 +38,51 @@ contract testSilverERC20 is StdCheats, Test {
         vm.expectRevert();
         vm.prank(msg.sender);
         i_silverERC20.mint(USER, 0);
+    }
+
+    function testBurnSilverSuccess() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 200);
+
+        vm.prank(USER);
+        bool success = i_silverERC20.burn(USER, 150);
+        assertTrue(success);
+        assertEq(i_silverERC20.balanceOf(USER), 50);
+    }
+
+    function testCannotBurnMoreThanBalance() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
+
+        vm.prank(USER);
+        vm.expectRevert(SilverERC20.SilverERC20__InsufficientBalance.selector);
+        i_silverERC20.burn(USER, 200);
+    }
+
+    function testCannotBurnIfNotOwner() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
+
+        vm.prank(ATTACKER);
+        vm.expectRevert(SilverERC20.SilverERC20__UnauthorizedBurn.selector);
+        i_silverERC20.burn(USER, 50);
+    }
+
+    function testCannotBurnZeroAmount() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
+
+        vm.prank(USER);
+        vm.expectRevert(SilverERC20.SilverERC20__AmountMustBeGreaterThanZero.selector);
+        i_silverERC20.burn(USER, 0);
+    }
+
+    function testCannotBurnFromZeroAddress() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
+
+        vm.prank(USER);
+        vm.expectRevert(SilverERC20.SilverERC20__UnauthorizedBurn.selector);
+        i_silverERC20.burn(address(0), 50);
     }
 }
