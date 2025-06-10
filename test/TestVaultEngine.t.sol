@@ -4,14 +4,12 @@ pragma solidity ^0.8.25;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {StdCheats} from "lib/forge-std/src/StdCheats.sol";
 import {SilverNFT} from "../src/token/SilverNFT.sol";
-import {IdUtils} from "../src/utils/IdUtils.sol";
 import {VaultEngine} from "../src/engine/VaultEngine.sol";
 import {deployEngine} from "../script/deployEngine.s.sol";
 import {deployToken} from "../script/deployToken.s.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IdUtils} from "../src/utils/IdUtils.sol";
 
-contract TestVaultEngine is Test, AccessControl {
+contract TestVaultEngine is Test {
     using IdUtils for string;
 
     VaultEngine vault;
@@ -38,10 +36,9 @@ contract TestVaultEngine is Test, AccessControl {
     string[] randomSilverIdSeven = ["c4f8b3", "b8d2e1", "f1a0c9", "2e4a7b", "904edc"];
     string[] randomSilverIdEight = ["8d1a2c", "3f9b7e", "0a4e1f", "b3c6a8", "e4f1d0"];
 
-
     modifier addSilverStockInStoreA() {
         vm.startPrank(vaultAdmin);
-        for(uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             vault.registerBar(randomSilverIdOne[i], _weight[0], _purity, _redeemLocationA);
             vault.registerBar(randomSilverIdTwo[i], _weight[1], _purity, _redeemLocationA);
             vault.registerBar(randomSilverIdThree[i], _weight[2], _purity, _redeemLocationA);
@@ -53,7 +50,7 @@ contract TestVaultEngine is Test, AccessControl {
 
     modifier addSilverStockInStoreB() {
         vm.startPrank(vaultAdmin);
-        for(uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             vault.registerBar(randomSilverIdFive[i], _weight[0], _purity, _redeemLocationB);
             vault.registerBar(randomSilverIdSix[i], _weight[1], _purity, _redeemLocationB);
             vault.registerBar(randomSilverIdSeven[i], _weight[2], _purity, _redeemLocationB);
@@ -63,10 +60,25 @@ contract TestVaultEngine is Test, AccessControl {
         _;
     }
 
+    modifier assignNftToRandomUser() {
+        vm.startPrank(address(vault));
+        string memory silverIdOneOz = randomSilverIdOne[0];
+        string memory silverIdFiveOz = randomSilverIdTwo[0];
+        string memory silverIdTenOz = randomSilverIdThree[0];
+        string memory silverIdFiftyOz = randomSilverIdFour[0];
+
+        nft.transfer(randomUser, silverIdOneOz._hashIdToUint());
+        nft.transfer(randomUser, silverIdFiveOz._hashIdToUint());
+        nft.transfer(randomUser, silverIdTenOz._hashIdToUint());
+        nft.transfer(randomUser, silverIdFiftyOz._hashIdToUint());
+        vm.stopPrank();
+        _;
+    }
+
     ///@notice the deployer for local test is the first anvil account that can be seen in the HelperConfig
     function setUp() public {
         deployer = new deployEngine();
-        (,vault,,silverNFTAddress,,) = deployer.run();
+        (, vault,, silverNFTAddress,,) = deployer.run();
         nft = SilverNFT(silverNFTAddress);
     }
 
@@ -116,19 +128,55 @@ contract TestVaultEngine is Test, AccessControl {
 
         uint256 tokenId = _id._hashIdToUint();
         vm.prank(randomUser);
-        vault.redeemFromVault(1, _redeemLocationA);
+        vault.redeemFromVault(randomUser,1, _redeemLocationA);
         assertEq(nft.balanceOf(randomUser), 1);
     }
 
-    function testRedeemMultipleSilverNft() public addSilverStockInStoreA() {
+    function testRedeemMultipleSilverNft() public addSilverStockInStoreA {
         vm.prank(randomUser);
-        vault.redeemFromVault(10, _redeemLocationA);
+        vault.redeemFromVault(randomUser,10, _redeemLocationA);
         assertEq(nft.balanceOf(randomUser), 1);
     }
 
-    function testRedeemMultipleNftAndCheckTheWeight() public addSilverStockInStoreA() {
-        vm.prank(randomUser);
-        vault.redeemFromVault(8, _redeemLocationA); //Should return 4 NFT, 1 NFT with weight of 5 oz, and 3 NFT with weight of 1 oz
+    function testRedeemMultipleNftAndCheckTheWeight() public addSilverStockInStoreA {
+        vm.startPrank(randomUser);
+        vault.redeemFromVault(randomUser,8, _redeemLocationA); //Should return 4 NFT, 1 NFT with weight of 5 oz, and 3 NFT with weight of 1 oz
+        vm.stopPrank();
         assertEq(nft.balanceOf(randomUser), 4);
+
+        uint256 size = nft.balanceOf(randomUser);
+        uint256[] memory listOfNftOwnedByUser = new uint256[](size);
+        for (uint256 i = 0; i < size; i++) {
+            listOfNftOwnedByUser[i] = nft.tokenOfOwnerByIndex(randomUser, i);
+        }
+
+        uint256 countFiveOz = 0;
+        uint256 countOneOz = 0;
+        for (uint256 i = 0; i < size; i++) {
+            if (vault.getSilverNftMetadata(listOfNftOwnedByUser[i]).weight == 5) {
+                countFiveOz++;
+            } else if (vault.getSilverNftMetadata(listOfNftOwnedByUser[i]).weight == 1) {
+                countOneOz++;
+            }
+        }
+        assertEq(countFiveOz, 1);
+        assertEq(countOneOz, 3);
     }
+
+    function testRedeemFailedBecauseNotEnoughSilverStockInVault() public addSilverStockInStoreB {
+        vm.prank(randomUser);
+        vm.expectRevert();
+        vault.redeemFromVault(msg.sender,100, _redeemLocationA);
+    }
+
+    // function testIterateThroughTokenOwner() public addSilverStockInStoreA()/*  assignNftToRandomUser() */ {
+    //     vm.prank(randomUser);
+    //     uint256 size = nft.balanceOf(randomUser);
+    //     uint256[] memory listOfNftOwnedByUser = new uint256[](size);
+    //     for(uint256 i = 0; i < size; i++) {
+    //         listOfNftOwnedByUser[i] = nft.tokenOfOwnerByIndex(randomUser, i);
+    //     }
+    //     console.log("Total NFT owned by is: ",size);
+
+    // }
 }

@@ -19,9 +19,8 @@ import {VaultEngine} from "src/engine/VaultEngine.sol";
 contract SilverTradeEngine is ReentrancyGuard {
     using IdUtils for string;
 
-    error SilverTradeEngine__OraclePriceIsStale(int256);
+    error SilverTradeEngine__OraclePriceIsStale(uint256);
     error SilverTradeEngine__AmountToBuyNeedMoreThanZero();
-    error SilverTradeEngine__ExceedLimitOfMaxPurchase(uint256);
     error SilverTradeEngine__TransferFailed();
     error SilverTradeEngine__StableCoinTransferFailed();
     error SilverTradeEngine__ERC20MintFailed();
@@ -40,8 +39,7 @@ contract SilverTradeEngine is ReentrancyGuard {
     AggregatorV3Interface immutable i_aggregator;
     VaultEngine immutable vault;
 
-    int256 constant PRECISION = 1e10;
-    uint256 constant MAX_AMOUNT = 1000000;
+    uint256 constant PRECISION = 1e18;
 
     mapping(address seller => uint256 amountToSell) private s_listedERC2OSilverToSell;
     mapping(address seller => uint256 tokenIdToSell) private s_listedNFTToSell;
@@ -53,12 +51,12 @@ contract SilverTradeEngine is ReentrancyGuard {
     event ERC20Unlisted(address indexed owner);
     event NFTUnlisted(address indexed owner);
 
-    constructor(address SilverERC20, address SilverNFT, address MockStableCoin, address silverPriceFeedAddress) {
+    constructor(address SilverERC20, address SilverNFT, address MockStableCoin, address silverPriceFeedAddress, address vaultAddress) {
         i_silverERC20 = ISilverERC20(SilverERC20);
         i_silverNFT = ISilverNFT(SilverNFT);
         i_mockStableCoin = IERC20(MockStableCoin);
         i_aggregator = AggregatorV3Interface(silverPriceFeedAddress);
-        vault = VaultEngine(SilverNFT);
+        vault = VaultEngine(vaultAddress);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -86,16 +84,14 @@ contract SilverTradeEngine is ReentrancyGuard {
         if (amountSilverToBuy == 0) {
             revert SilverTradeEngine__AmountToBuyNeedMoreThanZero();
         }
-        if (amountSilverToBuy > MAX_AMOUNT) {
-            revert SilverTradeEngine__ExceedLimitOfMaxPurchase(amountSilverToBuy);
-        }
+
         //pull price from oracle for the silver (DECIMAL IN 8, CORRECT THE PRECISION)
-        int256 price = getSilverPrice();
+        uint256 price = getSilverPrice();
         if (price <= 0) {
             revert SilverTradeEngine__OraclePriceIsStale(price);
         }
         //check the stablecoin amount payed
-        uint256 amountToPay = amountSilverToBuy * uint256(price);
+        uint256 amountToPay = (amountSilverToBuy * uint256(price)/1e18);
 
         _safeTransferStableCoin(msg.sender, address(this), amountToPay);
 
@@ -114,7 +110,7 @@ contract SilverTradeEngine is ReentrancyGuard {
      */
     function buySilverERC20(address seller) external virtual {
         uint256 amountToBuy = s_listedERC2OSilverToSell[seller];
-        int256 silverPrice = getSilverPrice();
+        uint256 silverPrice = getSilverPrice();
         uint256 calculatedPrice = amountToBuy * uint256(silverPrice);
 
         _safeTransferStableCoin(msg.sender, address(this), calculatedPrice);
@@ -130,7 +126,7 @@ contract SilverTradeEngine is ReentrancyGuard {
         uint256 silverNFTId = s_listedNFTToSell[seller];
         // (, uint256 weight,,) = vault.getSilverNftMetadata(silverNFTId);
         uint256 weight = vault.getSilverNftMetadata(silverNFTId).weight;
-        int256 price = getSilverPrice();
+        uint256 price = getSilverPrice();
         uint256 calculatedPrice = uint256(price) * weight;
 
         _safeTransferStableCoin(msg.sender, address(this), calculatedPrice);
@@ -154,7 +150,8 @@ contract SilverTradeEngine is ReentrancyGuard {
         if (!burnSuccess) {
             revert SilverTradeEngine__BurnFailed();
         }
-        bool redeemSuccess = vault.redeemFromVault(amountToRedeem, location);
+        amountToRedeem = amountToRedeem / PRECISION;
+        bool redeemSuccess = vault.redeemFromVault(msg.sender, amountToRedeem, location);
         if (!redeemSuccess) {
             revert SilverTradeEngine__RedeemSilverFailed();
         }
@@ -234,11 +231,13 @@ contract SilverTradeEngine is ReentrancyGuard {
                             HELPER FUNCTION
     //////////////////////////////////////////////////////////////*/
     /**
-     * @notice silverPrice is in 18 decimals
+     * @notice silverPrice is in 18 decimals because it follow the ERC20 standard
+     @notice The silver Price need to be divided by 1e8 so the output is in 18 decimals format.
      */
-    function getSilverPrice() internal view returns (int256) {
+    function getSilverPrice() public view returns (uint256) {
         (, int256 price,,,) = i_aggregator.latestRoundData();
-        int256 silverPrice = (price * PRECISION);
+        uint256 silverPrice = (uint256(price) * PRECISION)/1e8;
+        //3e9 * 1e10
         return silverPrice;
     }
 
@@ -263,7 +262,7 @@ contract SilverTradeEngine is ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                               VIEW SECTION
     //////////////////////////////////////////////////////////////*/
-    function getCurrentSilverPrice() external view returns (int256) {
+    function getCurrentSilverPrice() external view returns (uint256) {
         return getSilverPrice();
     }
 }

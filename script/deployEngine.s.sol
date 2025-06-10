@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {Script} from "lib/forge-std/src/Script.sol";
+import {Script, console} from "lib/forge-std/src/Script.sol";
 import {SilverTradeEngine} from "../src/engine/SilverTradeEngine.sol";
 import {VaultEngine} from "../src/engine/VaultEngine.sol";
 import {deployToken} from "../script/deployToken.s.sol";
@@ -11,17 +11,7 @@ import {MockStableCoin} from "../src/token/MockStableCoin.sol";
 import {HelperConfig} from "../script/HelperConfig.s.sol";
 
 contract deployEngine is Script {
-    function run()
-        public
-        returns (
-            SilverTradeEngine,
-            VaultEngine,
-            address ,
-            address ,
-            address ,
-            address 
-        )
-    {
+    function run() public returns (SilverTradeEngine, VaultEngine, address, address, address, address) {
         HelperConfig config = new HelperConfig();
         (
             address silverERC20Address,
@@ -32,9 +22,9 @@ contract deployEngine is Script {
         ) = config.activeNetworkConfig();
 
         vm.startBroadcast(privKey);
-        SilverTradeEngine tradeEngine =
-            new SilverTradeEngine(silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
         VaultEngine vaultEngine = new VaultEngine(silverNFTAddress);
+        SilverTradeEngine tradeEngine =
+            new SilverTradeEngine(silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress, address(vaultEngine));
         vm.stopBroadcast();
         return (tradeEngine, vaultEngine, silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
     }

@@ -12,7 +12,7 @@ import {MockV3Aggregator} from "test/mockPriceFeed/mockPriceFeed.sol";
 contract HelperConfig is Script {
     deployToken tokenDeployer;
 
-    uint256 constant INITIAL_SUPPLY = 1e10;
+    uint256 constant INITIAL_SUPPLY = 100000e18;
     uint8 constant DECIMALS = 8;
     ///@notice Ley say the silver price per oz is $30
     int256 constant SILVER_PRICE = 30e8;
@@ -46,7 +46,7 @@ contract HelperConfig is Script {
     }
 
     function anvilAndLocalConfig() public returns (NetworkConfig memory) {
-        vm.startBroadcast();
+        vm.startBroadcast(vm.envUint("ANVIL_PRIVATE_KEY_1"));
         SilverNFT silverNFT = new SilverNFT();
         SilverERC20 silverERC20 = new SilverERC20();
         MockStableCoin stableCoin = new MockStableCoin(INITIAL_SUPPLY);
