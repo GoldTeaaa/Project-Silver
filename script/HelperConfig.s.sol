@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {StdCheats} from "lib/forge-std/src/StdCheats.sol";
-import {Script} from "lib/forge-std/src/Script.sol";
+import {Script, console} from "lib/forge-std/src/Script.sol";
 import {SilverERC20} from "src/token/SilverERC20.sol";
 import {SilverNFT} from "src/token/SilverNFT.sol";
 import {MockStableCoin} from "src/token/MockStableCoin.sol";
@@ -51,6 +51,7 @@ contract HelperConfig is Script {
         SilverERC20 silverERC20 = new SilverERC20();
         MockStableCoin stableCoin = new MockStableCoin(INITIAL_SUPPLY);
         MockV3Aggregator priceFeed = new MockV3Aggregator(DECIMALS, SILVER_PRICE);
+        console.log(vm.addr(vm.envUint("ANVIL_PRIVATE_KEY_1")));
         vm.stopBroadcast();
 
         return NetworkConfig({

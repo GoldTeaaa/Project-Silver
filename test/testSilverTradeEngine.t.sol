@@ -87,8 +87,10 @@ contract TestTradeEngine is Test {
         stableCoin = MockStableCoin(stableCoinAddress);
         priceFeed = MockV3Aggregator(priceFeedAddress);
 
-        vm.prank(vaultAdmin);
+        vm.startPrank(vaultAdmin);
         stableCoin.transfer(BUYER, initialUserBalance);
+        silverERC20.grantRole(silverERC20.getBurnerRole(), address(tradeEngine));
+        vm.stopPrank();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -114,7 +116,7 @@ contract TestTradeEngine is Test {
     }
 
     function testBuySilverNFT() public{
-
+        
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -140,20 +142,6 @@ contract TestTradeEngine is Test {
 
         uint256 totalNftOwned = nft.balanceOf(BUYER);
         assertEq(totalNftOwned, 3);
-    }
-
-    function testDirectRedeem() public addSilverStockInStoreA{
-        uint256 silverPrice = calculateSilverPrice(buySixTeenSilver);
-        uint256 buySixTeenSilverInPrecision = calculatePrecision(buySixTeenSilver);
-
-        vm.startPrank(BUYER);
-        stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buySixTeenSilver);
-        silverERC20.burn(BUYER, buySixTeenSilver);
-        vault.redeemFromVault(BUYER,buySixTeenSilver, redeemLocationA);
-        vm.stopPrank();
-        assertEq(silverERC20.balanceOf(BUYER), 0);
-        console.log(nft.balanceOf(BUYER));
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -4,6 +4,8 @@ pragma solidity ^0.8.25;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {SilverTradeEngine} from "src/engine/SilverTradeEngine.sol";
+import {console} from "lib/forge-std/src/console.sol";
 
 contract SilverERC20 is ERC20, AccessControl{
     error SilverERC20__AddressCantBeNull();
@@ -15,7 +17,6 @@ contract SilverERC20 is ERC20, AccessControl{
 
     constructor() ERC20("ETHSilver", "ESLV") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(burnerRole, msg.sender);
     }
 
     function mint(address _to, uint256 _amount) external returns (bool /* addRole */ ) {
@@ -30,7 +31,7 @@ contract SilverERC20 is ERC20, AccessControl{
         return true;
     }
 
-    function burn(address _from, uint256 _amount) external /* onlyRole(burnerRole) */ returns(bool) {
+    function burn(address _from, uint256 _amount) external onlyRole(burnerRole) returns(bool) {
         uint256 senderBalance = balanceOf(_from);
 
         if (_from == address(0)) {
@@ -44,5 +45,9 @@ contract SilverERC20 is ERC20, AccessControl{
         }
         _burn(_from, _amount);
         return true;
+    }
+
+    function getBurnerRole() external view returns (bytes32) {
+        return burnerRole;
     }
 }

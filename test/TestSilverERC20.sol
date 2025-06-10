@@ -23,8 +23,8 @@ contract testSilverERC20 is StdCheats, Test, AccessControl{
         (silverERC20,,) = deployer.run();
         i_silverERC20 = ISilverERC20(address(silverERC20));
 
-        // vm.prank(vaultAdmin);
-        // silverERC20.grantRole(burnerRole, USER);
+        vm.prank(vaultAdmin);
+        silverERC20.grantRole(burnerRole, USER);
     }
 
     function testMintSilver() public {
@@ -50,7 +50,7 @@ contract testSilverERC20 is StdCheats, Test, AccessControl{
         vm.prank(USER);
         i_silverERC20.mint(USER, 200);
 
-        vm.prank(address(deployer));
+        vm.prank(USER);
         bool success = i_silverERC20.burn(USER, 150);
         assertTrue(success);
         assertEq(i_silverERC20.balanceOf(USER), 50);
@@ -65,14 +65,14 @@ contract testSilverERC20 is StdCheats, Test, AccessControl{
         i_silverERC20.burn(USER, 200);
     }
 
-    // function testCannotBurnIfNotOwner() public {
-    //     vm.prank(USER);
-    //     i_silverERC20.mint(USER, 100);
+    function testCannotBurnIfNotOwner() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
 
-    //     vm.prank(ATTACKER);
-    //     vm.expectRevert(SilverERC20.SilverERC20__UnauthorizedBurn.selector);
-    //     i_silverERC20.burn(USER, 50);
-    // }
+        vm.prank(ATTACKER);
+        vm.expectRevert();
+        i_silverERC20.burn(USER, 50);
+    }
 
     function testCannotBurnZeroAmount() public {
         vm.prank(USER);
@@ -83,12 +83,12 @@ contract testSilverERC20 is StdCheats, Test, AccessControl{
         i_silverERC20.burn(USER, 0);
     }
 
-    // function testCannotBurnFromZeroAddress() public {
-    //     vm.prank(USER);
-    //     i_silverERC20.mint(USER, 100);
+    function testCannotBurnFromZeroAddress() public {
+        vm.prank(USER);
+        i_silverERC20.mint(USER, 100);
 
-    //     vm.prank(USER);
-    //     vm.expectRevert();
-    //     i_silverERC20.burn(address(0), 50);
-    // }
+        vm.prank(USER);
+        vm.expectRevert();
+        i_silverERC20.burn(address(0), 50);
+    }
 }
