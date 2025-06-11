@@ -23,8 +23,9 @@ contract deployEngine is Script {
 
         vm.startBroadcast(privKey);
         VaultEngine vaultEngine = new VaultEngine(silverNFTAddress);
-        SilverTradeEngine tradeEngine =
-            new SilverTradeEngine(silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress, address(vaultEngine));
+        SilverTradeEngine tradeEngine = new SilverTradeEngine(
+            silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress, address(vaultEngine)
+        );
         vm.stopBroadcast();
         return (tradeEngine, vaultEngine, silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
     }

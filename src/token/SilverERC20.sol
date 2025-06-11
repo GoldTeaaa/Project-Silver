@@ -7,7 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {SilverTradeEngine} from "src/engine/SilverTradeEngine.sol";
 import {console} from "lib/forge-std/src/console.sol";
 
-contract SilverERC20 is ERC20, AccessControl{
+contract SilverERC20 is ERC20, AccessControl {
     error SilverERC20__AddressCantBeNull();
     error SilverERC20__AmountMustBeGreaterThanZero();
     error SilverERC20__InsufficientBalance(uint256);
@@ -31,7 +31,7 @@ contract SilverERC20 is ERC20, AccessControl{
         return true;
     }
 
-    function burn(address _from, uint256 _amount) external onlyRole(burnerRole) returns(bool) {
+    function burn(address _from, uint256 _amount) external onlyRole(burnerRole) returns (bool) {
         uint256 senderBalance = balanceOf(_from);
 
         if (_from == address(0)) {
@@ -47,7 +47,7 @@ contract SilverERC20 is ERC20, AccessControl{
         return true;
     }
 
-    function getBurnerRole() external view returns (bytes32) {
+    function getBurnerRole() external pure returns (bytes32) {
         return burnerRole;
     }
 }

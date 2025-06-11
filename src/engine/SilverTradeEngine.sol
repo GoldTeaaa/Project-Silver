@@ -32,6 +32,8 @@ contract SilverTradeEngine is ReentrancyGuard {
     error SilverTradeEngine__BurnFailed();
     error SilverTradeEngine__NotOwnerOfNFT(address);
     error SilverTradeEngine__NFTNotApproved(address);
+    error SilverTradeEngine__InsufficientBalanceOfSenderToSellERC20(uint256);
+    error SilverTradeEngine__AddressHaveNoERC20ToSell(address);
 
     ISilverERC20 immutable i_silverERC20;
     ISilverNFT immutable i_silverNFT;
@@ -48,10 +50,17 @@ contract SilverTradeEngine is ReentrancyGuard {
     event RedeemSilver(address indexed from, uint256 indexed amount, string indexed location);
     event SellERC20Succeeded(address indexed from, address indexed to, uint256 indexed amount);
     event NFTListed(address indexed from, uint256 indexed tokenId, string indexed silverId);
+    event ERC20Listed(address indexed from, uint256 indexed amountToSell);
     event ERC20Unlisted(address indexed owner);
     event NFTUnlisted(address indexed owner);
 
-    constructor(address SilverERC20, address SilverNFT, address MockStableCoin, address silverPriceFeedAddress, address vaultAddress) {
+    constructor(
+        address SilverERC20,
+        address SilverNFT,
+        address MockStableCoin,
+        address silverPriceFeedAddress,
+        address vaultAddress
+    ) {
         i_silverERC20 = ISilverERC20(SilverERC20);
         i_silverNFT = ISilverNFT(SilverNFT);
         i_mockStableCoin = IERC20(MockStableCoin);
@@ -91,7 +100,7 @@ contract SilverTradeEngine is ReentrancyGuard {
             revert SilverTradeEngine__OraclePriceIsStale(price);
         }
         //check the stablecoin amount payed
-        uint256 amountToPay = (amountSilverToBuy * uint256(price)/1e18);
+        uint256 amountToPay = (amountSilverToBuy * uint256(price)) / PRECISION;
 
         _safeTransferStableCoin(msg.sender, address(this), amountToPay);
 
@@ -107,11 +116,15 @@ contract SilverTradeEngine is ReentrancyGuard {
     /**
      * @notice This function is still in development stage and not proper for production.
      * @notice Assume to buy directly all the silver sold by the seller.
+     * @notice For research purpose, only to showcase that the idea consist of trade and sell
      */
     function buySilverERC20(address seller) external virtual {
+        if(s_listedERC2OSilverToSell[seller] == 0) {
+            revert SilverTradeEngine__AddressHaveNoERC20ToSell(seller);
+        }
         uint256 amountToBuy = s_listedERC2OSilverToSell[seller];
         uint256 silverPrice = getSilverPrice();
-        uint256 calculatedPrice = amountToBuy * uint256(silverPrice);
+        uint256 calculatedPrice = (amountToBuy * uint256(silverPrice))/PRECISION;
 
         _safeTransferStableCoin(msg.sender, address(this), calculatedPrice);
         _safeTransferSilverERC20(seller, msg.sender, amountToBuy);
@@ -130,7 +143,7 @@ contract SilverTradeEngine is ReentrancyGuard {
         uint256 calculatedPrice = uint256(price) * weight;
 
         _safeTransferStableCoin(msg.sender, address(this), calculatedPrice);
-        i_silverNFT.safeTransferFrom(address(this), msg.sender, silverNFTId);
+        i_silverNFT.safeTransferFrom(seller, msg.sender, silverNFTId);
         emit PaymentReceived(msg.sender, address(this), calculatedPrice);
     }
 
@@ -169,12 +182,13 @@ contract SilverTradeEngine is ReentrancyGuard {
         if (balanceOfSender < amountToTransfer) {
             revert SilverTradeEngine__InsufficientBalanceOfSenderToTransfer(balanceOfSender);
         }
+        // i_silverERC20.approve(address(this), amountToTransfer);
         _safeTransferSilverERC20(msg.sender, to, amountToTransfer);
     }
 
     function transferNFT(address to, string memory silverId) external checkNullAddress(to) {
         uint256 silverNFTId = silverId._hashIdToUint();
-        bool success = i_silverNFT.transfer(to, silverNFTId);
+        bool success = i_silverNFT.transfer(msg.sender, to, silverNFTId);
         if (!success) {
             revert SilverTradeEngine__TransferNFTOwnershipFailed();
         }
@@ -184,11 +198,17 @@ contract SilverTradeEngine is ReentrancyGuard {
                           SELL SILVER SECTION
     //////////////////////////////////////////////////////////////*/
     function listERC20ToSell(uint256 amountToSell) external {
-        bool success = i_silverERC20.approve(address(this), amountToSell);
-        if (!success) {
-            revert SilverTradeEngine__TransferERC20OwnershipFailed();
+        uint256 balanceOfSeller = i_silverERC20.balanceOf(msg.sender);
+        if(balanceOfSeller < amountToSell) {
+            revert SilverTradeEngine__InsufficientBalanceOfSenderToSellERC20(balanceOfSeller);
         }
+        // bool success = i_silverERC20.approve(address(this), amountToSell);
+        // if (!success) {
+        //     revert SilverTradeEngine__TransferERC20OwnershipFailed();
+        // }
         s_listedERC2OSilverToSell[msg.sender] = amountToSell;
+
+        emit ERC20Listed(msg.sender, amountToSell);
     }
 
     /**
@@ -202,12 +222,9 @@ contract SilverTradeEngine is ReentrancyGuard {
 
         address ownerOfNft = i_silverNFT.ownerOf(silverNFTId);
         if (ownerOfNft != msg.sender) {
-            revert SilverTradeEngine__NotOwnerOfNFT(ownerOfNft);
+            revert SilverTradeEngine__NotOwnerOfNFT(msg.sender);
         }
-        address approvedBy = i_silverNFT.getApproved(silverNFTId);
-        if (approvedBy != address(this)) {
-            revert SilverTradeEngine__NFTNotApproved(approvedBy);
-        }
+        // i_silverNFT.approve(address(this), silverNFTId);
 
         s_listedNFTToSell[msg.sender] = silverNFTId;
 
@@ -217,26 +234,28 @@ contract SilverTradeEngine is ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                              UNLIST SECTION
     //////////////////////////////////////////////////////////////*/
-    function unlistERC20ToSell() external {
-        delete s_listedERC2OSilverToSell[msg.sender];
-        emit ERC20Unlisted(msg.sender);
-    }
+    ///@dev This will be used for future development. For current research unlist will not be added
 
-    function unlistNftToSell() external {
-        delete s_listedNFTToSell[msg.sender];
-        emit NFTUnlisted(msg.sender);
-    }
+    // function unlistERC20ToSell() external {
+    //     delete s_listedERC2OSilverToSell[msg.sender];
+    //     emit ERC20Unlisted(msg.sender);
+    // }
+
+    // function unlistNftToSell() external {
+    //     delete s_listedNFTToSell[msg.sender];
+    //     emit NFTUnlisted(msg.sender);
+    // }
 
     /*//////////////////////////////////////////////////////////////
                             HELPER FUNCTION
     //////////////////////////////////////////////////////////////*/
     /**
      * @notice silverPrice is in 18 decimals because it follow the ERC20 standard
-     @notice The silver Price need to be divided by 1e8 so the output is in 18 decimals format.
+     *  @notice The silver Price need to be divided by 1e8 so the output is in 18 decimals format.
      */
     function getSilverPrice() public view returns (uint256) {
         (, int256 price,,,) = i_aggregator.latestRoundData();
-        uint256 silverPrice = (uint256(price) * PRECISION)/1e8;
+        uint256 silverPrice = (uint256(price) * PRECISION) / 1e8;
         //3e9 * 1e10
         return silverPrice;
     }
@@ -265,4 +284,13 @@ contract SilverTradeEngine is ReentrancyGuard {
     function getCurrentSilverPrice() external view returns (uint256) {
         return getSilverPrice();
     }
+
+    function getListedERC20ToSell(address user) external view returns (uint256) {
+        return s_listedERC2OSilverToSell[user];
+    }
+
+    function getListedNFTToSell(address user) external view returns (uint256) {
+        return s_listedNFTToSell[user];
+    }
+
 }

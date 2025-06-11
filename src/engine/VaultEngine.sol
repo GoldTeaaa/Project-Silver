@@ -81,14 +81,17 @@ contract VaultEngine is AccessControl, Test {
         });
 
         s_availableTokensByLocationAndWeight[_redeemLocation][_weight].push(tokenId);
-
     }
 
     /**
      * @dev [WARNING!] Revert if the fractional doesnt match the amountToRedeem, not production safe!
      * @dev use greedy algorithm to redeem
+     * @notice The NFT use LIFO concept, where the last minted NFT will be redeemed first
      */
-    function redeemFromVault(address receiver, uint256 amountToRedeem, string calldata location) external returns (bool) {
+    function redeemFromVault(address receiver, uint256 amountToRedeem, string calldata location)
+        external
+        returns (bool)
+    {
         //Select how many NFT to be redeemed
         //check the stock in the location
         bool haveStocks = checkIfStoreLocationHaveStock(location);
@@ -130,7 +133,7 @@ contract VaultEngine is AccessControl, Test {
     }
 
     function checkIfStoreLocationHaveStock(string calldata location) internal view returns (bool) {
-        for(uint256 i=0; i<weights.length; i++) {
+        for (uint256 i = 0; i < weights.length; i++) {
             if (s_availableTokensByLocationAndWeight[location][weights[i]].length > 0) {
                 return true;
             }

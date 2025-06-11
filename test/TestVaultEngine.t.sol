@@ -67,10 +67,10 @@ contract TestVaultEngine is Test {
         string memory silverIdTenOz = randomSilverIdThree[0];
         string memory silverIdFiftyOz = randomSilverIdFour[0];
 
-        nft.transfer(randomUser, silverIdOneOz._hashIdToUint());
-        nft.transfer(randomUser, silverIdFiveOz._hashIdToUint());
-        nft.transfer(randomUser, silverIdTenOz._hashIdToUint());
-        nft.transfer(randomUser, silverIdFiftyOz._hashIdToUint());
+        nft.transfer(address(vault), randomUser, silverIdOneOz._hashIdToUint());
+        nft.transfer(address(vault), randomUser, silverIdFiveOz._hashIdToUint());
+        nft.transfer(address(vault), randomUser, silverIdTenOz._hashIdToUint());
+        nft.transfer(address(vault), randomUser, silverIdFiftyOz._hashIdToUint());
         vm.stopPrank();
         _;
     }
@@ -128,19 +128,19 @@ contract TestVaultEngine is Test {
 
         uint256 tokenId = _id._hashIdToUint();
         vm.prank(randomUser);
-        vault.redeemFromVault(randomUser,1, _redeemLocationA);
+        vault.redeemFromVault(randomUser, 1, _redeemLocationA);
         assertEq(nft.balanceOf(randomUser), 1);
     }
 
     function testRedeemMultipleSilverNft() public addSilverStockInStoreA {
         vm.prank(randomUser);
-        vault.redeemFromVault(randomUser,10, _redeemLocationA);
+        vault.redeemFromVault(randomUser, 10, _redeemLocationA);
         assertEq(nft.balanceOf(randomUser), 1);
     }
 
     function testRedeemMultipleNftAndCheckTheWeight() public addSilverStockInStoreA {
         vm.startPrank(randomUser);
-        vault.redeemFromVault(randomUser,8, _redeemLocationA); //Should return 4 NFT, 1 NFT with weight of 5 oz, and 3 NFT with weight of 1 oz
+        vault.redeemFromVault(randomUser, 8, _redeemLocationA); //Should return 4 NFT, 1 NFT with weight of 5 oz, and 3 NFT with weight of 1 oz
         vm.stopPrank();
         assertEq(nft.balanceOf(randomUser), 4);
 
@@ -166,7 +166,7 @@ contract TestVaultEngine is Test {
     function testRedeemFailedBecauseNotEnoughSilverStockInVault() public addSilverStockInStoreB {
         vm.prank(randomUser);
         vm.expectRevert();
-        vault.redeemFromVault(msg.sender,100, _redeemLocationA);
+        vault.redeemFromVault(msg.sender, 100, _redeemLocationA);
     }
 
     // function testIterateThroughTokenOwner() public addSilverStockInStoreA()/*  assignNftToRandomUser() */ {

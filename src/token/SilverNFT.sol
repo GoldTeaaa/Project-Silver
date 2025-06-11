@@ -32,12 +32,12 @@ contract SilverNFT is ERC721Enumerable {
         return true;
     }
 
-    function transfer(address to, uint256 id) external returns (bool) {
+    function transfer(address from, address to, uint256 id) external returns (bool) {
         address owner = _ownerOf(id);
-        if (owner != msg.sender) {
+        if (owner != from) {
             revert SilverNFT__NotTokenOwner(owner);
         }
-        safeTransferFrom(msg.sender, to, id);
+        safeTransferFrom(from, to, id);
         return true;
     }
 }

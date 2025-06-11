@@ -51,7 +51,7 @@ contract testSilverNft is Test {
         i_silverNFT.mintNft(tokenId);
 
         vm.prank(buyer);
-        bool success = silverNFT.transfer(admin, tokenId);
+        bool success = silverNFT.transfer(buyer, admin, tokenId);
         assertTrue(success);
         assertEq(i_silverNFT.ownerOf(tokenId), admin);
     }
@@ -62,7 +62,7 @@ contract testSilverNft is Test {
 
         vm.prank(attacker);
         vm.expectRevert();
-        silverNFT.transfer(admin, tokenId);
+        silverNFT.transfer(attacker, admin, tokenId);
     }
 
     function testRevertIfTransferToZeroAddress() public {
@@ -71,6 +71,6 @@ contract testSilverNft is Test {
 
         vm.prank(buyer);
         vm.expectRevert();
-        silverNFT.transfer(address(0), tokenId);
+        silverNFT.transfer(buyer, address(0), tokenId);
     }
 }

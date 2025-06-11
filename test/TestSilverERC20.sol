@@ -8,7 +8,7 @@ import {ISilverERC20} from "../src/interface/ISilverERC20.sol";
 import {deployToken} from "../script/deployToken.s.sol";
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
-contract testSilverERC20 is StdCheats, Test, AccessControl{
+contract testSilverERC20 is StdCheats, Test, AccessControl {
     SilverERC20 silverERC20;
     ISilverERC20 i_silverERC20;
     deployToken deployer;
