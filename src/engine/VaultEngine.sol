@@ -132,6 +132,15 @@ contract VaultEngine is AccessControl, Test {
         return s_silverMetadata[tokenId];
     }
 
+    function getSilverNftMetadataInDetails(uint256 tokenId) external view returns (string memory, uint256, uint256, string memory) {
+        return (
+            s_silverMetadata[tokenId].id,
+            s_silverMetadata[tokenId].weight,
+            s_silverMetadata[tokenId].purity,
+            s_silverMetadata[tokenId].redeemLocation
+        );
+    }
+
     function checkIfStoreLocationHaveStock(string calldata location) internal view returns (bool) {
         for (uint256 i = 0; i < weights.length; i++) {
             if (s_availableTokensByLocationAndWeight[location][weights[i]].length > 0) {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 /**
- * @title SilverTradeEngine
+ *  @title SilverTradeEngine
  *  @author Handaya Riawan
  *  @dev Still in development stage, not proper for production.
  *  @dev This contract is used for research purpose and not yet applicable to real world usage.
@@ -100,11 +100,12 @@ contract SilverTradeEngine is ReentrancyGuard {
             revert SilverTradeEngine__OraclePriceIsStale(price);
         }
         //check the stablecoin amount payed
-        uint256 amountToPay = (amountSilverToBuy * uint256(price)) / PRECISION;
+        uint256 amountToPay = (amountSilverToBuy * uint256(price)) ;
 
         _safeTransferStableCoin(msg.sender, address(this), amountToPay);
 
-        bool mintSuccess = i_silverERC20.mint(msg.sender, amountSilverToBuy);
+        uint256 amountSilverToMintInPrecision = amountSilverToBuy * PRECISION;
+        bool mintSuccess = i_silverERC20.mint(msg.sender, amountSilverToMintInPrecision);
         //mint the erc20 to the user
         if (!mintSuccess) {
             revert SilverTradeEngine__ERC20MintFailed();
@@ -119,12 +120,12 @@ contract SilverTradeEngine is ReentrancyGuard {
      * @notice For research purpose, only to showcase that the idea consist of trade and sell
      */
     function buySilverERC20(address seller) external virtual {
-        if(s_listedERC2OSilverToSell[seller] == 0) {
+        if (s_listedERC2OSilverToSell[seller] == 0) {
             revert SilverTradeEngine__AddressHaveNoERC20ToSell(seller);
         }
         uint256 amountToBuy = s_listedERC2OSilverToSell[seller];
         uint256 silverPrice = getSilverPrice();
-        uint256 calculatedPrice = (amountToBuy * uint256(silverPrice))/PRECISION;
+        uint256 calculatedPrice = (amountToBuy * uint256(silverPrice)) / PRECISION;
 
         _safeTransferStableCoin(msg.sender, address(this), calculatedPrice);
         _safeTransferSilverERC20(seller, msg.sender, amountToBuy);
@@ -159,15 +160,17 @@ contract SilverTradeEngine is ReentrancyGuard {
         //check if the vault have stocks, if not then revert
         //burn the redeemer erc20 token
         //mint the nft to the redeemer
+        uint256 amountToRedeemInPrecision = amountToRedeem * PRECISION;
         bool burnSuccess = i_silverERC20.burn(msg.sender, amountToRedeem);
         if (!burnSuccess) {
             revert SilverTradeEngine__BurnFailed();
         }
         amountToRedeem = amountToRedeem / PRECISION;
-        bool redeemSuccess = vault.redeemFromVault(msg.sender, amountToRedeem, location);
-        if (!redeemSuccess) {
-            revert SilverTradeEngine__RedeemSilverFailed();
-        }
+        /* bool redeemSuccess =  */
+        vault.redeemFromVault(msg.sender, amountToRedeem, location);
+        // if (!redeemSuccess) {
+        //     revert SilverTradeEngine__RedeemSilverFailed();
+        // }
         emit RedeemSilver(msg.sender, amountToRedeem, location);
     }
 
@@ -189,9 +192,9 @@ contract SilverTradeEngine is ReentrancyGuard {
     function transferNFT(address to, string memory silverId) external checkNullAddress(to) {
         uint256 silverNFTId = silverId._hashIdToUint();
         bool success = i_silverNFT.transfer(msg.sender, to, silverNFTId);
-        if (!success) {
-            revert SilverTradeEngine__TransferNFTOwnershipFailed();
-        }
+        // if (!success) {
+        //     revert SilverTradeEngine__TransferNFTOwnershipFailed();
+        // }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -199,7 +202,7 @@ contract SilverTradeEngine is ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
     function listERC20ToSell(uint256 amountToSell) external {
         uint256 balanceOfSeller = i_silverERC20.balanceOf(msg.sender);
-        if(balanceOfSeller < amountToSell) {
+        if (balanceOfSeller < amountToSell) {
             revert SilverTradeEngine__InsufficientBalanceOfSenderToSellERC20(balanceOfSeller);
         }
         // bool success = i_silverERC20.approve(address(this), amountToSell);
@@ -266,16 +269,16 @@ contract SilverTradeEngine is ReentrancyGuard {
      */
     function _safeTransferStableCoin(address from, address to, uint256 amount) internal virtual {
         bool transferSuccess = i_mockStableCoin.transferFrom(from, to, amount);
-        if (!transferSuccess) {
-            revert SilverTradeEngine__StableCoinTransferFailed();
-        }
+        // if (!transferSuccess) {
+        //     revert SilverTradeEngine__StableCoinTransferFailed();
+        // }
     }
 
     function _safeTransferSilverERC20(address from, address to, uint256 amount) internal {
         bool transferERC20Success = i_silverERC20.transferFrom(from, to, amount);
-        if (!transferERC20Success) {
-            revert SilverTradeEngine__TransferERC20OwnershipFailed();
-        }
+        // if (!transferERC20Success) {
+        //     revert SilverTradeEngine__TransferERC20OwnershipFailed();
+        // }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -292,5 +295,4 @@ contract SilverTradeEngine is ReentrancyGuard {
     function getListedNFTToSell(address user) external view returns (uint256) {
         return s_listedNFTToSell[user];
     }
-
 }

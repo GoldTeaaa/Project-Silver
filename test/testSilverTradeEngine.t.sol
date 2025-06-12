@@ -75,23 +75,23 @@ contract TestTradeEngine is Test {
         _;
     }
 
-    modifier buyAndRedeemSilver(){
+    modifier buyAndRedeemSilver() {
         uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
         vm.startPrank(BUYER);
         stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
+        tradeEngine.buySilver(buyTenOzSilver);
         tradeEngine.redeemSilver(buyTenOzSilverInPrecision, redeemLocationA);
         vm.stopPrank();
         _;
     }
 
-    modifier buySilver(){
+    modifier buySilver() {
         uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
         vm.startPrank(BUYER);
         stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
+        tradeEngine.buySilver(buyTenOzSilver);
         vm.stopPrank();
         _;
     }
@@ -133,19 +133,33 @@ contract TestTradeEngine is Test {
         vm.stopPrank();
     }
 
-    function testBuySilver() public {
+    function testBuySilverDirectly() public {
         uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
 
         vm.startPrank(BUYER);
         stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
+        tradeEngine.buySilver(buyTenOzSilver);
         vm.stopPrank();
 
         assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
+        assertEq(stableCoin.balanceOf(BUYER), initialUserBalance - silverPrice);
     }
 
-    function testBuySilverERC20() public addSilverStockInStoreA() buySilver(){
+    function testBuySixteenSilverDirectly() public {
+        uint256 silverPrice = calculateSilverPrice(buySixTeenSilver);
+        uint256 buyTenOzSilverInPrecision = calculatePrecision(buySixTeenSilver);
+
+        vm.startPrank(BUYER);
+        stableCoin.approve(address(tradeEngine), silverPrice);
+        tradeEngine.buySilver(buySixTeenSilver);
+        vm.stopPrank();
+
+        assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
+        assertEq(stableCoin.balanceOf(BUYER), initialUserBalance - silverPrice);
+    }
+
+    function testBuySilverERC20() public addSilverStockInStoreA buySilver {
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
         vm.startPrank(BUYER);
         tradeEngine.listERC20ToSell(buyTenOzSilverInPrecision);
@@ -162,7 +176,7 @@ contract TestTradeEngine is Test {
         assertEq(silverERC20.balanceOf(BUYER2), buyTenOzSilverInPrecision);
     }
 
-    function testBuySilverNFT() public addSilverStockInStoreA() buyAndRedeemSilver(){
+    function testBuySilverNFT() public addSilverStockInStoreA buyAndRedeemSilver {
         string memory silverId = randomSilverIdTwo[4];
         uint256 nftId = silverId._hashIdToUint();
         uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
@@ -173,7 +187,7 @@ contract TestTradeEngine is Test {
         vm.stopPrank();
 
         uint256 nftIdToSell = tradeEngine.getListedNFTToSell(BUYER);
-        assertEq(nftIdToSell, randomSilverIdTwo[4]._hashIdToUint()); 
+        assertEq(nftIdToSell, randomSilverIdTwo[4]._hashIdToUint());
 
         vm.startPrank(BUYER2);
         stableCoin.approve(address(tradeEngine), silverPrice);
@@ -192,8 +206,10 @@ contract TestTradeEngine is Test {
 
         vm.startPrank(BUYER);
         stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buySilverInPrecision);
-        vm.expectRevert(abi.encodeWithSelector(VaultEngine.VaultEngine__LocationHaveZeroSilverToRedeem.selector, redeemLocationA));
+        tradeEngine.buySilver(buySixTeenSilver);
+        vm.expectRevert(
+            abi.encodeWithSelector(VaultEngine.VaultEngine__LocationHaveZeroSilverToRedeem.selector, redeemLocationA)
+        );
         tradeEngine.redeemSilver(buySilverInPrecision, redeemLocationA);
         vm.stopPrank();
     }
@@ -204,9 +220,10 @@ contract TestTradeEngine is Test {
 
         vm.startPrank(BUYER);
         stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buySixTeenSilverInPrecision);
+        tradeEngine.buySilver(buySixTeenSilver);
         vm.stopPrank();
         assertEq(silverERC20.balanceOf(BUYER), buySixTeenSilverInPrecision);
+        assertEq(stableCoin.balanceOf(BUYER), initialUserBalance - silverPrice);
         console.log("This address balance ", address(BUYER));
         console.log("is: ", silverERC20.balanceOf(BUYER));
 
@@ -215,7 +232,10 @@ contract TestTradeEngine is Test {
         assertEq(silverERC20.balanceOf(BUYER), 0);
 
         uint256 totalNftOwned = nft.balanceOf(BUYER);
+        // uint256 nftId = randomSilverIdTwo[1]._hashIdToUint();
         assertEq(totalNftOwned, 3);
+        console.log(address(vault));
+        // assertEq(nft.ownerOf(nftId), BUYER);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -224,19 +244,16 @@ contract TestTradeEngine is Test {
     function testRevertInsufficientBalanceERC20Transfer() public {
         uint256 transferAmount = calculatePrecision(100);
         vm.prank(BUYER);
-        vm.expectRevert(abi.encodeWithSelector(SilverTradeEngine.SilverTradeEngine__InsufficientBalanceOfSenderToTransfer.selector, 0));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SilverTradeEngine.SilverTradeEngine__InsufficientBalanceOfSenderToTransfer.selector, 0
+            )
+        );
         tradeEngine.transferERC20(RECEIVER, transferAmount);
     }
 
-    function testTransferERC20() public {
-        uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
+    function testTransferERC20() public buySilver(){
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
-
-        vm.startPrank(BUYER);
-        stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
-        vm.stopPrank();
-        assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
 
         uint256 amountToTransfer = buyTenOzSilverInPrecision / 2;
         vm.startPrank(BUYER);
@@ -246,7 +263,7 @@ contract TestTradeEngine is Test {
         assertEq(silverERC20.balanceOf(RECEIVER), amountToTransfer);
     }
 
-    function testRevertNFTNotApproved() public addSilverStockInStoreA buyAndRedeemSilver() {
+    function testRevertNFTNotApproved() public addSilverStockInStoreA buyAndRedeemSilver {
         string memory silverId = randomSilverIdTwo[4];
 
         vm.prank(BUYER);
@@ -260,21 +277,16 @@ contract TestTradeEngine is Test {
         vm.stopPrank();
     }
 
-    function testRevertListNFTNotOwned() public addSilverStockInStoreA buyAndRedeemSilver() {
+    function testRevertListNFTNotOwned() public addSilverStockInStoreA buyAndRedeemSilver {
         vm.prank(UNAUTHORIZED);
-        vm.expectRevert(abi.encodeWithSelector(SilverTradeEngine.SilverTradeEngine__NotOwnerOfNFT.selector, UNAUTHORIZED));
+        vm.expectRevert(
+            abi.encodeWithSelector(SilverTradeEngine.SilverTradeEngine__NotOwnerOfNFT.selector, UNAUTHORIZED)
+        );
         tradeEngine.listNftToSell(randomSilverIdTwo[0]);
     }
 
-    function testTransferNFT() public addSilverStockInStoreA {
-        uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
+    function testTransferNFT() public addSilverStockInStoreA buySilver(){
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
-
-        vm.startPrank(BUYER);
-        stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
-        vm.stopPrank();
-        assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
 
         vm.prank(BUYER);
         tradeEngine.redeemSilver(buyTenOzSilverInPrecision, redeemLocationA);
@@ -304,30 +316,16 @@ contract TestTradeEngine is Test {
                              SELL FUNCTION
     //////////////////////////////////////////////////////////////*/
 
-    function testRevertIfSellerHaveNoBalance() public {
-        uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
+    function testRevertIfSellerHaveNoBalance() public buySilver(){
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
-
-        vm.startPrank(BUYER);
-        stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
-        vm.stopPrank();
-        assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
 
         vm.prank(makeAddr("BROKE_MAN"));
         vm.expectRevert();
         tradeEngine.listERC20ToSell(buyTenOzSilverInPrecision);
     }
 
-    function testListSilverERC20ToSell() public {
-        uint256 silverPrice = calculateSilverPrice(buyTenOzSilver);
+    function testListSilverERC20ToSell() public buySilver{
         uint256 buyTenOzSilverInPrecision = calculatePrecision(buyTenOzSilver);
-
-        vm.startPrank(BUYER);
-        stableCoin.approve(address(tradeEngine), silverPrice);
-        tradeEngine.buySilver(buyTenOzSilverInPrecision);
-        vm.stopPrank();
-        assertEq(silverERC20.balanceOf(BUYER), buyTenOzSilverInPrecision);
 
         vm.prank(BUYER);
         tradeEngine.listERC20ToSell(buyTenOzSilverInPrecision);
@@ -337,7 +335,7 @@ contract TestTradeEngine is Test {
         assertEq(silverERC20.allowance(BUYER, address(tradeEngine)), 0);
     }
 
-    function testListSilverNFTToSell() public addSilverStockInStoreA buyAndRedeemSilver(){
+    function testListSilverNFTToSell() public addSilverStockInStoreA buyAndRedeemSilver {
         string memory silverId = randomSilverIdTwo[4];
         uint256 nftId = silverId._hashIdToUint();
 
@@ -347,12 +345,14 @@ contract TestTradeEngine is Test {
         vm.stopPrank();
 
         uint256 nftIdToSell = tradeEngine.getListedNFTToSell(BUYER);
-        assertEq(nftIdToSell, randomSilverIdTwo[4]._hashIdToUint()); 
+        assertEq(nftIdToSell, randomSilverIdTwo[4]._hashIdToUint());
     }
 
-    function testRevertUnauthorizedSeller() public addSilverStockInStoreA buyAndRedeemSilver(){
+    function testRevertUnauthorizedSeller() public addSilverStockInStoreA buyAndRedeemSilver {
         vm.prank(UNAUTHORIZED);
-        vm.expectRevert(abi.encodeWithSelector(SilverTradeEngine.SilverTradeEngine__NotOwnerOfNFT.selector, UNAUTHORIZED));
+        vm.expectRevert(
+            abi.encodeWithSelector(SilverTradeEngine.SilverTradeEngine__NotOwnerOfNFT.selector, UNAUTHORIZED)
+        );
         tradeEngine.listNftToSell(randomSilverIdTwo[4]);
     }
 
@@ -376,7 +376,7 @@ contract TestTradeEngine is Test {
 
     function calculateSilverPrice(uint256 amount) public view returns (uint256 price) {
         uint256 silverPrice = tradeEngine.getSilverPrice();
-        price = amount * silverPrice;
+        price = amount * silverPrice; //This in 8 decimals
         return price;
     }
 

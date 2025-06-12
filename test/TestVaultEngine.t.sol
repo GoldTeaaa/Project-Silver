@@ -105,6 +105,7 @@ contract TestVaultEngine is Test {
 
         uint256 tokenId = _id._hashIdToUint();
         assertEq(nft.ownerOf(tokenId), address(vault));
+        // assertEq(nft.balanceOf(address(vault)), 1);
 
         assertEq(vault.getSilverNftMetadata(tokenId).id, _id);
         assertEq(vault.getSilverNftMetadata(tokenId).weight, _weight[1]);

@@ -51,7 +51,6 @@ contract HelperConfig is Script {
         SilverERC20 silverERC20 = new SilverERC20();
         MockStableCoin stableCoin = new MockStableCoin(INITIAL_SUPPLY);
         MockV3Aggregator priceFeed = new MockV3Aggregator(DECIMALS, SILVER_PRICE);
-        console.log(vm.addr(vm.envUint("ANVIL_PRIVATE_KEY_1")));
         vm.stopBroadcast();
 
         return NetworkConfig({

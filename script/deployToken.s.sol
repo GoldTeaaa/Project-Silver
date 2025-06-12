@@ -12,11 +12,23 @@ contract deployToken is Script {
     uint256 constant INITIAL_SUPPLY = 10 ** 18;
 
     function run() public returns (SilverERC20, SilverNFT, MockStableCoin) {
-        vm.startBroadcast(vm.envUint("ANVIL_PRIVATE_KEY_1"));
-        SilverNFT silverNFT = new SilverNFT();
-        SilverERC20 silverERC20 = new SilverERC20();
-        MockStableCoin stableCoin = new MockStableCoin(INITIAL_SUPPLY);
-        vm.stopBroadcast();
+        SilverNFT silverNFT;
+        SilverERC20 silverERC20;
+        MockStableCoin stableCoin;
+
+        if (block.chainid == 11_155_111) {
+            vm.startBroadcast(vm.envUint("MAIN_SEPOLIA"));
+            silverNFT = new SilverNFT();
+            silverERC20 = new SilverERC20();
+            stableCoin = new MockStableCoin(INITIAL_SUPPLY);
+            vm.stopBroadcast();
+        } else {
+            vm.startBroadcast(vm.envUint("ANVIL_PRIVATE_KEY_1"));
+            silverNFT = new SilverNFT();
+            silverERC20 = new SilverERC20();
+            stableCoin = new MockStableCoin(INITIAL_SUPPLY);
+            vm.stopBroadcast();
+        }
 
         return (silverERC20, silverNFT, stableCoin);
     }
