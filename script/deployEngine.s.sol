@@ -13,6 +13,9 @@ import {HelperConfig} from "../script/HelperConfig.s.sol";
 contract deployEngine is Script {
     VaultEngine vaultEngine;
     bytes32 public constant burnerRole = keccak256("BURNER_ROLE");
+    address private sepoliaBuyer = 0x5a50d4047228AdBcD696A3B7B1a148D2e7464304;
+    uint256 constant PRECISION = 1e18;
+    uint256 public initialUserBalance = 10000 * PRECISION;
 
     function run()
         public
@@ -42,6 +45,9 @@ contract deployEngine is Script {
         );
         registerInitialBarSupply();
         SilverERC20(silverERC20Address).grantRole(burnerRole, address(tradeEngine));
+        if (block.chainid == 11_155_111) {
+            MockStableCoin(mockStableCoinAddress).transfer(sepoliaBuyer, initialUserBalance);
+        }
         vm.stopBroadcast();
         return (tradeEngine, vaultEngine, silverERC20Address, silverNFTAddress, mockStableCoinAddress, priceFeedAddress);
     }
