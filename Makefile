@@ -30,35 +30,6 @@ buyerApproveStableCoinTransfer :; cast send $(STABLECOIN_ADDRESS) "approve(addre
 
 buySilver :; cast send $(SILVER_ENGINE_ADDRESS) "buySilver(uint256)" 18 --private-key $(ANVIL_PRIVATE_KEY_2) --rpc-url $(ANVIL_RPC_URL)
 
-#================================================= SEPOLIA ===========================================================================
-S_SILVER_ENGINE_ADDRESS := 0xcD44684aa5DCBE638a1Ea8655DfDb4f04d04B549
-S_VAULT_ENGINE_ADDRESS := 0xf5DD8afbDDdeced012dc063E073b1fEf77b84bD0
-S_SILVER_ERC20_ADDRESS := 0xB02A7996e72ab708C8f8BD57329Bd00f152AbB26
-S_SILVER_NFT_ADDRESS := 0xcFdfEC23879723e387756cf5Ca3c73f8e9fd4C09
-S_STABLECOIN_ADDRESS := 0x10477d27C5F6e8494Ec118e13AB06d37Ede95d36
-S_ORACLE_ADDRESS := 0x09B2D06C684772a22447Cc260001480228C1695c
-
-sepoliaInitiateFundForBuyer :; cast send $(S_STABLECOIN_ADDRESS) "transfer(address,uint256)" $(SECOND_SEPOLIA_ADDRESS) "$(AMOUNT)" --private-key $(MAIN_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaBuyerApproveStableCoinTransfer :; cast send $(S_STABLECOIN_ADDRESS) "approve(address,uint256)" $(S_SILVER_ENGINE_ADDRESS) "$(SIXTEEN_SILVER_PRICE)" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaBuySilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "buySilver(uint256)" 18 --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaGrantAccess :; cast send $(S_SILVER_ERC20_ADDRESS) "grantRole(bytes32,address)" $(BURNER_ROLE) $(S_SILVER_ENGINE_ADDRESS) --private-key $(MAIN_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaRedeemSilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "redeemSilver(uint256, string)" "$(REDEEM_IN_PRECISION)" "StoreA" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaCheckNftInVault :; cast call $(S_SILVER_NFT_ADDRESS) "balanceOf(address)" $(S_VAULT_ENGINE_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaCheckNftInBuyer :; cast call $(S_SILVER_NFT_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaCheckBuyerStableCoin :; cast call $(S_STABLECOIN_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaCheckBuyerSilverERC20 :; cast call $(S_SILVER_ERC20_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-sepoliaCheckOraclePrice :; cast call $(S_ORACLE_ADDRESS) "latestRoundData()" --rpc-url $(ETH_SEPOLIA_RPC_URL)
-
-
 #===================================== Check If Buyer StableCoin Reduce and SilverERC20 Increase ==========================================================
 
 checkBuyerStableCoin :; cast call $(STABLECOIN_ADDRESS) "balanceOf(address)" $(ANVIL_ADDRESS_2) --rpc-url $(ANVIL_RPC_URL)
@@ -77,34 +48,56 @@ checkOwnershipOfOwner :; cast call $(SILVER_NFT_ADDRESS) "balanceOf(address)" $(
 
 checkOwnerOfNft :; cast call $(SILVER_NFT_ADDRESS) "ownerOf(uint256)" 0xc8ebba3fee22c1d1329a7a1af4f149e2b2c6f22535b8b922f856f8362f9a687b --rpc-url $(ANVIL_RPC_URL)
 
-#================================================= REGISTER BAR ===========================================================================
+#========================================================== SEPOLIA ===========================================================================
+S_SILVER_ENGINE_ADDRESS := 0xcD44684aa5DCBE638a1Ea8655DfDb4f04d04B549
+S_VAULT_ENGINE_ADDRESS := 0xf5DD8afbDDdeced012dc063E073b1fEf77b84bD0
+S_SILVER_ERC20_ADDRESS := 0xB02A7996e72ab708C8f8BD57329Bd00f152AbB26
+S_SILVER_NFT_ADDRESS := 0xcFdfEC23879723e387756cf5Ca3c73f8e9fd4C09
+S_STABLECOIN_ADDRESS := 0x10477d27C5F6e8494Ec118e13AB06d37Ede95d36
+S_ORACLE_ADDRESS := 0x09B2D06C684772a22447Cc260001480228C1695c
 
-define registerBar
-	cast send $(VAULT_ENGINE_ADDRESS) \
-		"registerBar(string,uint256,uint256,string)" \
-		"$(1)" $(2) $(3) "$(4)" \
-		--private-key $(ANVIL_PRIVATE_KEY_1) \
-		--rpc-url $(ANVIL_RPC_URL)
-endef
+sepoliaInitiateFundForBuyer :; cast send $(S_STABLECOIN_ADDRESS) "transfer(address,uint256)" $(SECOND_SEPOLIA_ADDRESS) "$(AMOUNT)" --private-key $(MAIN_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-oneOzRegisterBar:
-	$(call registerBar,SILV-1,1,999,Store A)
+sepoliaBuyerApproveStableCoinTransfer :; cast send $(S_STABLECOIN_ADDRESS) "approve(address,uint256)" $(S_SILVER_ENGINE_ADDRESS) "$(SIXTEEN_SILVER_PRICE)" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-fiveOzRegisterBar:
-	$(call registerBar,SILV-5,5,999,Store A)
+sepoliaBuySilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "buySilver(uint256)" 18 --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-tenOzRegisterBar:
-	$(call registerBar,SILV-10,10,999,Store A)
+sepoliaBuyFiftyFiveSilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "buySilver(uint256)" 55 --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-fiftyOzRegisterBar:
-	$(call registerBar,SILV-50,50,999,Store A)
+sepoliaGrantAccess :; cast send $(S_SILVER_ERC20_ADDRESS) "grantRole(bytes32,address)" $(BURNER_ROLE) $(S_SILVER_ENGINE_ADDRESS) --private-key $(MAIN_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-#================================================= Check Register Success ===========================================================================
+sepoliaRedeemSilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "redeemSilver(uint256, string)" "$(REDEEM_IN_PRECISION)" "StoreA" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-checkMetadataOneOz :; cast call $(VAULT_ENGINE_ADDRESS) "getSilverNftMetadataInDetails(uint256)" "0xb811912fb730f91b9ed2b0577bbe39d7a446cd2963f350dd5a66ff54bd47d919" --rpc-url http://127.0.0.1:8545
+#====================================================== SEPOLIA TRANSFER AND SELL ===================================================================
+AMOUNT_TRANSFER := 2000000000000000000
+AMOUNT_TO_SELL := 3000000000000000000
+REDEEM_FIFTY_FIVE_IN_PRECISION := 50000000000000000000
+FIRST_NFT_FROM_FIRST_REDEEM := 90879064225251964725523114633016714558010614405856399452748067475598740187259
+NFT_ID_TO_TRANSFER := 2645367492972744220434493984444000821050354316435437773300054635882933227952
+SILVER_ID_TRANSFER := "SILV-50"
 
-checkMetadataFiveOz :; cast call $(VAULT_ENGINE_ADDRESS) "getSilverNftMetadataInDetails(uint256)" "0xa901f34c748125ba8a7f8a84711a013f2d137035ee065234024c1e71dde56983" --rpc-url http://127.0.0.1:8545
+sepoliaApproveERC20Transfer :; cast send $(S_SILVER_ERC20_ADDRESS) "approve(address,uint256)" $(S_SILVER_ENGINE_ADDRESS) "$(AMOUNT_TRANSFER)" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-checkMetadataTenOz :; cast call $(VAULT_ENGINE_ADDRESS) "getSilverNftMetadataInDetails(uint256)" "0xc8ebba3fee22c1d1329a7a1af4f149e2b2c6f22535b8b922f856f8362f9a687b" --rpc-url http://127.0.0.1:8545
+sepoliaTransferERC20 :; cast send $(S_SILVER_ENGINE_ADDRESS) "transferERC20(address,uint256)" $(RECEIVER_ADDRESS) $(AMOUNT_TRANSFER) --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
-checkMetadataFiftyOz :; cast call $(VAULT_ENGINE_ADDRESS) "getSilverNftMetadataInDetails(uint256)" "0x05d93995c1f4155ee828119a997f9c9926d4ef59b91650b9c8062fca398991b0" --rpc-url http://127.0.0.1:8545
+sepoliaListERC20ToSell :; cast send $(S_VAULT_ENGINE_ADDRESS) "listERC20ToSell(uint256)" $(AMOUNT_TO_SELL) --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaRedeemFiftySilver :; cast send $(S_SILVER_ENGINE_ADDRESS) "redeemSilver(uint256, string)" "$(REDEEM_FIFTY_FIVE_IN_PRECISION)" "StoreA" --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaApproveTransferNft :; cast send $(S_SILVER_NFT_ADDRESS) "approve(address,uint256)" $(S_SILVER_ENGINE_ADDRESS) $(NFT_ID_TO_TRANSFER) --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaTransferNft :; cast send $(S_SILVER_ENGINE_ADDRESS) "transferNFT(address,string)" $(RECEIVER_ADDRESS) $(SILVER_ID_TRANSFER) --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaListNftToSell :; cast send $(S_VAULT_ENGINE_ADDRESS) "listNftToSell(string)" $(SILVER_ID_TRANSFER) --private-key $(SECOND_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckNftMetadata :; cast call $(S_VAULT_ENGINE_ADDRESS) "getSilverNftMetadataInDetails(uint256)" $(FIRST_NFT_FROM_FIRST_REDEEM) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckNftInVault :; cast call $(S_SILVER_NFT_ADDRESS) "balanceOf(address)" $(S_VAULT_ENGINE_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckNftInBuyer :; cast call $(S_SILVER_NFT_ADDRESS) "balanceOf(address)" $(RECEIVER_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckBuyerStableCoin :; cast call $(S_STABLECOIN_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckBuyerSilverERC20 :; cast call $(S_SILVER_ERC20_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaCheckOraclePrice :; cast call $(S_ORACLE_ADDRESS) "latestRoundData()" --rpc-url $(ETH_SEPOLIA_RPC_URL)
