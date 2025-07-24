@@ -45,7 +45,7 @@ contract deployEngine is Script {
         );
         registerInitialBarSupply();
         SilverERC20(silverERC20Address).grantRole(burnerRole, address(tradeEngine));
-        if (block.chainid == 11_155_111) {
+        if (block.chainid == 11_155_111 || block.chainid == 300) {
             MockStableCoin(mockStableCoinAddress).transfer(sepoliaBuyer, initialUserBalance);
         }
         vm.stopBroadcast();

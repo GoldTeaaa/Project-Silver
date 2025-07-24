@@ -101,3 +101,8 @@ sepoliaCheckBuyerStableCoin :; cast call $(S_STABLECOIN_ADDRESS) "balanceOf(addr
 sepoliaCheckBuyerSilverERC20 :; cast call $(S_SILVER_ERC20_ADDRESS) "balanceOf(address)" $(SECOND_SEPOLIA_ADDRESS) --rpc-url $(ETH_SEPOLIA_RPC_URL)
 
 sepoliaCheckOraclePrice :; cast call $(S_ORACLE_ADDRESS) "latestRoundData()" --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+sepoliaRegisterBar :; cast send $(S_VAULT_ENGINE_ADDRESS) "registerBar(string,uint256,uint256,string)" "SILV-10.2" 10 999 "StoreA" --private-key $(MAIN_SEPOLIA) --rpc-url $(ETH_SEPOLIA_RPC_URL)
+
+#====================================================== SEPOLIA TRANSFER AND SELL ===================================================================
+
