@@ -206,14 +206,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-## 📸 Optional Diagram (Insert if needed)
-
-You can add a system diagram (e.g., `architecture.png`) under `/docs` and embed it here:
-
-```md
-![System Architecture](docs/architecture.png)
-```
-
----
-
-Let us know if you'd like to contribute or collaborate!
+## Let us know if you'd like to contribute or collaborate!
